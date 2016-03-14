@@ -3,24 +3,16 @@ React = require \react
 
 {coordinates-in-list} = require "./conway-logic.ls"
 
-cell-style = do
-  width: 25
-  height: 25
-  border: 'solid 1px #bada55'
-
 ui = ({living-cells = []}) ->
   div {},
-    h1 {}, "Conway Game of Life"
+    for [x, y] in living-cells
+      div {key:"cell-#x-#y", class-name:\cell, style:top:y*20, left:x*20}
 
-    div {id:\play}, \play
-    div {id:\pause}, \pause
-    div {id:\tick}, \tick
+    div {class-name:\controls},
+      h1 {}, "Conway's Game of Life"
 
-    table {style:border-collapse:\collapse},
-      for x to 20
-        tr {},
-          for y to 20
-            td {id:"[#x, #y]", style:cell-style},
-              if coordinates-in-list living-cells, [x, y] then \X
+      div {id:\play}, \play
+      div {id:\pause}, \pause
+      div {id:\tick}, \tick
 
 module.exports = ui

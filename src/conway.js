@@ -44,18 +44,19 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Rx, ReactDOM, tick, ui, HTML_CONTAINER, GLIDER_SEED, clicks, toggles, pauser, play, pause, timer, ticks;
+	var Rx, ReactDOM, filter, ref$, tick, coordinatesInList, coordinatesEquals, ui, HTML_CONTAINER, GLIDER_SEED, clicks, toggles, pauser, play, pause, timer, ticks, toggleCell, updateWorld;
 	Rx = __webpack_require__(9);
 	ReactDOM = __webpack_require__(12);
-	tick = __webpack_require__(1).tick;
+	filter = __webpack_require__(3).filter;
+	ref$ = __webpack_require__(1), tick = ref$.tick, coordinatesInList = ref$.coordinatesInList, coordinatesEquals = ref$.coordinatesEquals;
 	ui = __webpack_require__(157);
 	HTML_CONTAINER = document.getElementById("conway");
 	GLIDER_SEED = [[0, 1], [1, 2], [2, 0], [2, 1], [2, 2]];
-	clicks = Rx.Observable.fromEvent(HTML_CONTAINER, "click");
+	clicks = Rx.Observable.fromEvent(document.body, "click");
 	toggles = clicks.filter(function(it){
-	  return /^\[/.test(it.target.id);
-	}).map(function(it){
-	  return JSON.parse(it.target.id);
+	  return !it.target.id;
+	}).map(function(e){
+	  return ['toggle', [Math.floor(e.pageX / 20), Math.floor(e.pageY / 20)]];
 	});
 	pauser = new Rx.Subject;
 	play = clicks.filter(function(it){
@@ -68,11 +69,37 @@
 	}).subscribe(function(){
 	  return pauser.onNext(false);
 	});
-	timer = Rx.Observable.interval(400).pausable(pauser);
+	timer = Rx.Observable.interval(400).pausable(pauser).map(function(){
+	  return ['tick'];
+	});
 	ticks = clicks.filter(function(it){
 	  return it.target.id === 'tick';
+	}).map(function(){
+	  return ['tick'];
 	});
-	Rx.Observable.merge([timer, ticks]).scan(tick, GLIDER_SEED).subscribe(function(livingCells){
+	toggleCell = function(list, coord){
+	  if (coordinatesInList(list, coord)) {
+	    return filter(function(it){
+	      return !coordinatesEquals(coord, it);
+	    })(
+	    list);
+	  } else {
+	    return list.concat([coord]);
+	  }
+	};
+	updateWorld = function(state, arg$){
+	  var action, value;
+	  action = arg$[0], value = arg$[1];
+	  switch (action) {
+	  case 'toggle':
+	    return toggleCell(state, value);
+	  case 'tick':
+	    return tick(state);
+	  default:
+	    return state;
+	  }
+	};
+	Rx.Observable.merge([timer, ticks, toggles]).scan(updateWorld, []).subscribe(function(livingCells){
 	  return ReactDOM.render(ui({
 	    livingCells: livingCells
 	  }), HTML_CONTAINER);
@@ -37590,49 +37617,38 @@
 /* 157 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var React, ref$, div, h1, a, table, tr, td, coordinatesInList, cellStyle, ui;
+	var React, ref$, div, h1, a, table, tr, td, coordinatesInList, ui;
 	React = __webpack_require__(158);
 	ref$ = React.DOM, div = ref$.div, h1 = ref$.h1, a = ref$.a, table = ref$.table, tr = ref$.tr, td = ref$.td;
 	coordinatesInList = __webpack_require__(1).coordinatesInList;
-	cellStyle = {
-	  width: 25,
-	  height: 25,
-	  border: 'solid 1px #bada55'
-	};
 	ui = function(arg$){
 	  var livingCells, ref$, x, y;
 	  livingCells = (ref$ = arg$.livingCells) != null
 	    ? ref$
 	    : [];
-	  return div({}, h1({}, "Conway Game of Life"), div({
+	  return div({}, (function(){
+	    var i$, ref$, len$, ref1$, results$ = [];
+	    for (i$ = 0, len$ = (ref$ = livingCells).length; i$ < len$; ++i$) {
+	      ref1$ = ref$[i$], x = ref1$[0], y = ref1$[1];
+	      results$.push(div({
+	        key: "cell-" + x + "-" + y,
+	        className: 'cell',
+	        style: {
+	          top: y * 20,
+	          left: x * 20
+	        }
+	      }));
+	    }
+	    return results$;
+	  }()), div({
+	    className: 'controls'
+	  }, h1({}, "Conway's Game of Life"), div({
 	    id: 'play'
 	  }, 'play'), div({
 	    id: 'pause'
 	  }, 'pause'), div({
 	    id: 'tick'
-	  }, 'tick'), table({
-	    style: {
-	      borderCollapse: 'collapse'
-	    }
-	  }, (function(){
-	    var i$, results$ = [];
-	    for (i$ = 0; i$ <= 20; ++i$) {
-	      x = i$;
-	      results$.push(tr({}, (fn$())));
-	    }
-	    return results$;
-	    function fn$(){
-	      var i$, results$ = [];
-	      for (i$ = 0; i$ <= 20; ++i$) {
-	        y = i$;
-	        results$.push(td({
-	          id: "[" + x + ", " + y + "]",
-	          style: cellStyle
-	        }, coordinatesInList(livingCells, [x, y]) ? 'X' : void 8));
-	      }
-	      return results$;
-	    }
-	  }())));
+	  }, 'tick')));
 	};
 	module.exports = ui;
 	//# sourceMappingURL=C:\Users\Florian\OneDrive\Dokumente\GitHub\conway-game-of-life\node_modules\livescript-loader\index.js!C:\Users\Florian\OneDrive\Dokumente\GitHub\conway-game-of-life\src\conway-ui.ls.map
