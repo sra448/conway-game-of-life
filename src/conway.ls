@@ -5,23 +5,36 @@ ReactDOM = require \react-dom
 ui = require \./conway-ui.ls
 {tick, coordinates-in-list, coordinates-equals} = require \./conway-logic.ls
 
+mouse-coords-to-tile-coords = (x, y) ->
+  [(Math.floor x / 20), (Math.floor y / 20)]
+
 # catch user interaction
 
 clicks = Rx.Observable.fromEvent document.body, "click"
+mouse-down = Rx.Observable.fromEvent document.body, \mousedown
+mouse-move = Rx.Observable.fromEvent document.body, \mousemove
+mouse-up = Rx.Observable.fromEvent document.body, \mouseup
 
 toggles = clicks
   .filter -> !it.target.id
-  .map (e) ->
-    [\toggle, [(Math.floor e.page-x / 20), (Math.floor e.page-y / 20)]]
+  .map (e) -> [\toggle, (mouse-coords-to-tile-coords e.page-x, e.page-y)]
+
+draws = mouse-down
+  .flat-map ->
+    mouse-move
+      .map (e) -> mouse-coords-to-tile-coords e.page-x, e.page-y
+      .distinct-until-changed!
+      .map (coords) -> [\draw, coords]
+      .take-until mouse-up
 
 pauser = new Rx.Subject
 
-play = clicks
+play = mouse-down
   .filter -> it.target.id == \play
   .subscribe ->
     pauser.onNext true
 
-pause = clicks
+pause = mouse-down
   .filter -> it.target.id == \pause
   .subscribe ->
     pauser.onNext false
@@ -31,11 +44,17 @@ timer = Rx.Observable
   .pausable pauser
   .map -> [\tick]
 
-ticks = clicks
+ticks = mouse-down
   .filter -> it.target.id == \tick
   .map -> [\tick]
 
 # world manipulation
+
+activate-cell = (list, coord) ->
+  if coordinates-in-list list, coord
+    list
+  else
+    list ++ [coord]
 
 toggle-cell = (list, coord) ->
   if coordinates-in-list list, coord
@@ -46,12 +65,13 @@ toggle-cell = (list, coord) ->
 update-world = (state, [action, value]) ->
   switch action
     case \toggle then toggle-cell state, value
+    case \draw then activate-cell state, value
     case \tick then tick state
     default state
 
 # kickoff
 
-Rx.Observable.merge [timer, ticks, toggles]
+Rx.Observable.merge [timer, ticks, toggles, draws]
   .start-with [\tick]
   .scan update-world, []
   .subscribe (living-cells) ->

@@ -44,25 +44,38 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Rx, ReactDOM, filter, ui, ref$, tick, coordinatesInList, coordinatesEquals, clicks, toggles, pauser, play, pause, timer, ticks, toggleCell, updateWorld;
+	var Rx, ReactDOM, filter, ui, ref$, tick, coordinatesInList, coordinatesEquals, mouseCoordsToTileCoords, clicks, mouseDown, mouseMove, mouseUp, toggles, draws, pauser, play, pause, timer, ticks, activateCell, toggleCell, updateWorld;
 	Rx = __webpack_require__(9);
 	ReactDOM = __webpack_require__(12);
 	filter = __webpack_require__(3).filter;
 	ui = __webpack_require__(157);
 	ref$ = __webpack_require__(1), tick = ref$.tick, coordinatesInList = ref$.coordinatesInList, coordinatesEquals = ref$.coordinatesEquals;
+	mouseCoordsToTileCoords = function(x, y){
+	  return [Math.floor(x / 20), Math.floor(y / 20)];
+	};
 	clicks = Rx.Observable.fromEvent(document.body, "click");
+	mouseDown = Rx.Observable.fromEvent(document.body, 'mousedown');
+	mouseMove = Rx.Observable.fromEvent(document.body, 'mousemove');
+	mouseUp = Rx.Observable.fromEvent(document.body, 'mouseup');
 	toggles = clicks.filter(function(it){
 	  return !it.target.id;
 	}).map(function(e){
-	  return ['toggle', [Math.floor(e.pageX / 20), Math.floor(e.pageY / 20)]];
+	  return ['toggle', mouseCoordsToTileCoords(e.pageX, e.pageY)];
+	});
+	draws = mouseDown.flatMap(function(){
+	  return mouseMove.map(function(e){
+	    return mouseCoordsToTileCoords(e.pageX, e.pageY);
+	  }).distinctUntilChanged().map(function(coords){
+	    return ['draw', coords];
+	  }).takeUntil(mouseUp);
 	});
 	pauser = new Rx.Subject;
-	play = clicks.filter(function(it){
+	play = mouseDown.filter(function(it){
 	  return it.target.id === 'play';
 	}).subscribe(function(){
 	  return pauser.onNext(true);
 	});
-	pause = clicks.filter(function(it){
+	pause = mouseDown.filter(function(it){
 	  return it.target.id === 'pause';
 	}).subscribe(function(){
 	  return pauser.onNext(false);
@@ -70,11 +83,18 @@
 	timer = Rx.Observable.interval(350).pausable(pauser).map(function(){
 	  return ['tick'];
 	});
-	ticks = clicks.filter(function(it){
+	ticks = mouseDown.filter(function(it){
 	  return it.target.id === 'tick';
 	}).map(function(){
 	  return ['tick'];
 	});
+	activateCell = function(list, coord){
+	  if (coordinatesInList(list, coord)) {
+	    return list;
+	  } else {
+	    return list.concat([coord]);
+	  }
+	};
 	toggleCell = function(list, coord){
 	  if (coordinatesInList(list, coord)) {
 	    return filter(function(it){
@@ -91,13 +111,15 @@
 	  switch (action) {
 	  case 'toggle':
 	    return toggleCell(state, value);
+	  case 'draw':
+	    return activateCell(state, value);
 	  case 'tick':
 	    return tick(state);
 	  default:
 	    return state;
 	  }
 	};
-	Rx.Observable.merge([timer, ticks, toggles]).startWith(['tick']).scan(updateWorld, []).subscribe(function(livingCells){
+	Rx.Observable.merge([timer, ticks, toggles, draws]).startWith(['tick']).scan(updateWorld, []).subscribe(function(livingCells){
 	  return ReactDOM.render(ui({
 	    livingCells: livingCells
 	  }), document.getElementById("conway"));
