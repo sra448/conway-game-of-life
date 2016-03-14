@@ -1,5 +1,6 @@
 * {
   font-family: sans-serif;
+  cursor: default;
 }
 
 html, body {
@@ -9,14 +10,13 @@ html, body {
   height: 100%;
 
   background-color:white;
-  background-image: linear-gradient(violet 1px, transparent 1px),
-                    linear-gradient(90deg, violet 1px, transparent 1px);
+  background-image: linear-gradient(violet 1px, transparent 1px), linear-gradient(90deg, violet 1px, transparent 1px);
   background-size:20px 20px;
   background-position:-1px -1px;
 }
 
 .controls {
-  position: absolute;
+  position: fixed;
   top: 30px;
   left: 30px;
   padding: 10px 15px;
@@ -35,4 +35,7 @@ h1 {
   height: 20px;
   background-color: violet;
   opacity: 0.6;
+  transition: opacity .25s ease-in-out;
+  -moz-transition: opacity .25s ease-in-out;
+  -webkit-transition: opacity .25s ease-in-out;
 }

@@ -2,11 +2,10 @@ Rx = require \rx
 ReactDOM = require \react-dom
 {filter} = require \prelude-ls
 
-{tick, coordinates-in-list, coordinates-equals} = require \./conway-logic.ls
 ui = require \./conway-ui.ls
+{tick, coordinates-in-list, coordinates-equals} = require \./conway-logic.ls
 
-HTML_CONTAINER = document.get-element-by-id "conway"
-GLIDER_SEED = [[0 1], [1 2], [2 0], [2 1], [2 2]]
+# catch user interaction
 
 clicks = Rx.Observable.fromEvent document.body, "click"
 
@@ -28,15 +27,15 @@ pause = clicks
     pauser.onNext false
 
 timer = Rx.Observable
-  .interval 400
+  .interval 350
   .pausable pauser
   .map -> [\tick]
-
-# take care of ticks
 
 ticks = clicks
   .filter -> it.target.id == \tick
   .map -> [\tick]
+
+# world manipulation
 
 toggle-cell = (list, coord) ->
   if coordinates-in-list list, coord
@@ -50,9 +49,10 @@ update-world = (state, [action, value]) ->
     case \tick then tick state
     default state
 
+# kickoff
+
 Rx.Observable.merge [timer, ticks, toggles]
+  .start-with [\tick]
   .scan update-world, []
   .subscribe (living-cells) ->
-    ReactDOM.render (ui {living-cells}), HTML_CONTAINER
-
-ReactDOM.render (ui {}), HTML_CONTAINER
+    ReactDOM.render (ui {living-cells}), document.get-element-by-id "conway"

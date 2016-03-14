@@ -125,11 +125,6 @@
 	      return expect(conway.expandBoundaries([[0, 0], [1, 1]])).toEqual([[-1, -1], [2, 2]]);
 	    });
 	  });
-	  describe("coordinates-beetween", function(){
-	    return thatIt("returns a list of all coordinates between two boundaries", function(){
-	      return expect(conway.coordinatesBeetween([[0, 0], [2, 2]])).toEqual([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]]);
-	    });
-	  });
 	  describe("coordinates-equals", function(){
 	    thatIt("returns true if the coordinates are equal", function(){
 	      return expect(conway.coordinatesEquals([0, 0], [0, 0])).toEqual(true);
@@ -146,9 +141,19 @@
 	      return expect(conway.coordinatesInList([[1, 0], [1, 1], [1, 2]], [0, 0])).toEqual(false);
 	    });
 	  });
+	  describe("coordinates-beetween", function(){
+	    return thatIt("returns a list of all coordinates between two boundaries", function(){
+	      return expect(conway.coordinatesBeetween([[0, 0], [2, 2]])).toEqual([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]]);
+	    });
+	  });
 	  describe("neighbour-coordinates", function(){
 	    return thatIt("returns a list of all the neighbouring coordinates given some coordinates", function(){
 	      return expect(conway.neighbourCoordinates([1, 1])).toEqual([[0, 0], [0, 1], [0, 2], [1, 0], [1, 2], [2, 0], [2, 1], [2, 2]]);
+	    });
+	  });
+	  describe("expand-coordinates", function(){
+	    return thatIt("returned list only contains each coordinates once", function(){
+	      return expect(conway.expandCoordinates([[1, 1], [2, 2]])).toEqual([[1, 1], [2, 2], [0, 0], [0, 1], [0, 2], [1, 0], [1, 2], [2, 0], [2, 1], [1, 3], [2, 3], [3, 1], [3, 2], [3, 3]]);
 	    });
 	  });
 	  describe("count-living-neighbours", function(){
@@ -228,9 +233,9 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Immutable, ref$, at, concatMap, curry, sortBy, filter, find, fold, map, split, zip, minimum, maximum, groupBy, values, join, log, read, print, coordinatesEquals, coordinatesInList, boundaries, expandBoundaries, coordinatesBeetween, neighbourCoordinates, countLivingNeighbours, willCellLive, tick;
+	var Immutable, ref$, at, concatMap, curry, sortBy, filter, flip, find, fold, map, split, zip, minimum, maximum, groupBy, values, join, log, read, print, coordinatesEquals, coordinatesInList, boundaries, expandBoundaries, coordinatesBeetween, neighbourCoordinates, expandCoordinates, countLivingNeighbours, willCellLive, tick;
 	Immutable = __webpack_require__(2);
-	ref$ = __webpack_require__(3), at = ref$.at, concatMap = ref$.concatMap, curry = ref$.curry, sortBy = ref$.sortBy, filter = ref$.filter, find = ref$.find, fold = ref$.fold, map = ref$.map, split = ref$.split, zip = ref$.zip, minimum = ref$.minimum, maximum = ref$.maximum, groupBy = ref$.groupBy, values = ref$.values, join = ref$.join;
+	ref$ = __webpack_require__(3), at = ref$.at, concatMap = ref$.concatMap, curry = ref$.curry, sortBy = ref$.sortBy, filter = ref$.filter, flip = ref$.flip, find = ref$.find, fold = ref$.fold, map = ref$.map, split = ref$.split, zip = ref$.zip, minimum = ref$.minimum, maximum = ref$.maximum, groupBy = ref$.groupBy, values = ref$.values, join = ref$.join;
 	log = function(it){
 	  console.log(it);
 	  return it;
@@ -340,6 +345,20 @@
 	  x = arg$[0], y = arg$[1];
 	  return [[x - 1, y - 1], [x - 1, y], [x - 1, y + 1], [x, y - 1], [x, y + 1], [x + 1, y - 1], [x + 1, y], [x + 1, y + 1]];
 	};
+	expandCoordinates = function(listOfCoordinates){
+	  return flip(fold)([], function(acc, x){
+	    if (coordinatesInList(acc, x)) {
+	      return acc;
+	    } else {
+	      return acc.concat([x]);
+	    }
+	  })(
+	  curry$(function(x$, y$){
+	    return x$.concat(y$);
+	  })(listOfCoordinates)(
+	  concatMap(neighbourCoordinates)(
+	  listOfCoordinates)));
+	};
 	countLivingNeighbours = function(livingCellsCoordinates, coordinates){
 	  return function(it){
 	    return it.length;
@@ -367,10 +386,8 @@
 	      numberOfNeighbours: countLivingNeighbours(livingCellsCoordinates, coords)
 	    });
 	  })(
-	  coordinatesBeetween(
-	  expandBoundaries(
-	  boundaries(
-	  livingCellsCoordinates))));
+	  expandCoordinates(
+	  livingCellsCoordinates));
 	};
 	module.exports = {
 	  read: read,
@@ -381,10 +398,24 @@
 	  coordinatesEquals: coordinatesEquals,
 	  coordinatesInList: coordinatesInList,
 	  neighbourCoordinates: neighbourCoordinates,
+	  expandCoordinates: expandCoordinates,
 	  countLivingNeighbours: countLivingNeighbours,
 	  willCellLive: willCellLive,
 	  tick: tick
 	};
+	function curry$(f, bound){
+	  var context,
+	  _curry = function(args) {
+	    return f.length > 1 ? function(){
+	      var params = args ? args.concat() : [];
+	      context = bound ? context || this : this;
+	      return params.push.apply(params, arguments) <
+	          f.length && arguments.length ?
+	        _curry.call(context, params) : f.apply(context, params);
+	    } : f;
+	  };
+	  return _curry();
+	}
 	//# sourceMappingURL=C:\Users\Florian\OneDrive\Dokumente\GitHub\conway-game-of-life\node_modules\livescript-loader\index.js!C:\Users\Florian\OneDrive\Dokumente\GitHub\conway-game-of-life\src\conway-logic.ls.map
 
 

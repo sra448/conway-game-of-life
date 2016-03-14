@@ -1,5 +1,5 @@
 Immutable = require \immutable
-{at, concat-map, curry, sort-by, filter, find, fold, map, split, zip, minimum, maximum, group-by, values, join} = require \prelude-ls
+{at, concat-map, curry, sort-by, filter, flip, find, fold, map, split, zip, minimum, maximum, group-by, values, join} = require \prelude-ls
 
 # log logs a single value, just for debugging
 log = ->
@@ -56,6 +56,14 @@ coordinates-beetween = ([[x-min, y-min], [x-max,  y-max]]) ->
 neighbour-coordinates = ([x, y]) ->
   [[x-1, y-1] [x-1, y] [x-1, y+1] [x, y-1] [x, y+1] [x+1, y-1] [x+1, y] [x+1, y+1]]
 
+# returns a list of all coordinates in the given array and all their neighbours
+expand-coordinates = (list-of-coordinates) ->
+  list-of-coordinates
+    |> concat-map neighbour-coordinates
+    |> (++) list-of-coordinates
+    |> (flip fold) [], (acc, x) ->
+      if coordinates-in-list acc, x then acc else acc ++ [x]
+
 # returns the number of living neighbours
 count-living-neighbours = (living-cells-coordinates, coordinates) ->
   coordinates
@@ -73,9 +81,7 @@ will-cell-live = ({living, number-of-neighbours}) ->
 # evolves a grid (list of living cells' coordinates) into the next ticks' grid
 tick = (living-cells-coordinates) ->
   living-cells-coordinates
-    |> boundaries
-    |> expand-boundaries
-    |> coordinates-beetween
+    |> expand-coordinates
     |> filter (coords) ->
       will-cell-live do
         living: coordinates-in-list living-cells-coordinates, coords
@@ -91,6 +97,7 @@ module.exports = {
   coordinates-equals
   coordinates-in-list
   neighbour-coordinates
+  expand-coordinates
   count-living-neighbours
   will-cell-live
   tick

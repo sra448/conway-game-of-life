@@ -44,14 +44,12 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Rx, ReactDOM, filter, ref$, tick, coordinatesInList, coordinatesEquals, ui, HTML_CONTAINER, GLIDER_SEED, clicks, toggles, pauser, play, pause, timer, ticks, toggleCell, updateWorld;
+	var Rx, ReactDOM, filter, ui, ref$, tick, coordinatesInList, coordinatesEquals, clicks, toggles, pauser, play, pause, timer, ticks, toggleCell, updateWorld;
 	Rx = __webpack_require__(9);
 	ReactDOM = __webpack_require__(12);
 	filter = __webpack_require__(3).filter;
-	ref$ = __webpack_require__(1), tick = ref$.tick, coordinatesInList = ref$.coordinatesInList, coordinatesEquals = ref$.coordinatesEquals;
 	ui = __webpack_require__(157);
-	HTML_CONTAINER = document.getElementById("conway");
-	GLIDER_SEED = [[0, 1], [1, 2], [2, 0], [2, 1], [2, 2]];
+	ref$ = __webpack_require__(1), tick = ref$.tick, coordinatesInList = ref$.coordinatesInList, coordinatesEquals = ref$.coordinatesEquals;
 	clicks = Rx.Observable.fromEvent(document.body, "click");
 	toggles = clicks.filter(function(it){
 	  return !it.target.id;
@@ -69,7 +67,7 @@
 	}).subscribe(function(){
 	  return pauser.onNext(false);
 	});
-	timer = Rx.Observable.interval(400).pausable(pauser).map(function(){
+	timer = Rx.Observable.interval(350).pausable(pauser).map(function(){
 	  return ['tick'];
 	});
 	ticks = clicks.filter(function(it){
@@ -99,12 +97,11 @@
 	    return state;
 	  }
 	};
-	Rx.Observable.merge([timer, ticks, toggles]).scan(updateWorld, []).subscribe(function(livingCells){
+	Rx.Observable.merge([timer, ticks, toggles]).startWith(['tick']).scan(updateWorld, []).subscribe(function(livingCells){
 	  return ReactDOM.render(ui({
 	    livingCells: livingCells
-	  }), HTML_CONTAINER);
+	  }), document.getElementById("conway"));
 	});
-	ReactDOM.render(ui({}), HTML_CONTAINER);
 	//# sourceMappingURL=C:\Users\Florian\OneDrive\Dokumente\GitHub\conway-game-of-life\node_modules\livescript-loader\index.js!C:\Users\Florian\OneDrive\Dokumente\GitHub\conway-game-of-life\src\conway.ls.map
 
 
@@ -112,9 +109,9 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Immutable, ref$, at, concatMap, curry, sortBy, filter, find, fold, map, split, zip, minimum, maximum, groupBy, values, join, log, read, print, coordinatesEquals, coordinatesInList, boundaries, expandBoundaries, coordinatesBeetween, neighbourCoordinates, countLivingNeighbours, willCellLive, tick;
+	var Immutable, ref$, at, concatMap, curry, sortBy, filter, flip, find, fold, map, split, zip, minimum, maximum, groupBy, values, join, log, read, print, coordinatesEquals, coordinatesInList, boundaries, expandBoundaries, coordinatesBeetween, neighbourCoordinates, expandCoordinates, countLivingNeighbours, willCellLive, tick;
 	Immutable = __webpack_require__(2);
-	ref$ = __webpack_require__(3), at = ref$.at, concatMap = ref$.concatMap, curry = ref$.curry, sortBy = ref$.sortBy, filter = ref$.filter, find = ref$.find, fold = ref$.fold, map = ref$.map, split = ref$.split, zip = ref$.zip, minimum = ref$.minimum, maximum = ref$.maximum, groupBy = ref$.groupBy, values = ref$.values, join = ref$.join;
+	ref$ = __webpack_require__(3), at = ref$.at, concatMap = ref$.concatMap, curry = ref$.curry, sortBy = ref$.sortBy, filter = ref$.filter, flip = ref$.flip, find = ref$.find, fold = ref$.fold, map = ref$.map, split = ref$.split, zip = ref$.zip, minimum = ref$.minimum, maximum = ref$.maximum, groupBy = ref$.groupBy, values = ref$.values, join = ref$.join;
 	log = function(it){
 	  console.log(it);
 	  return it;
@@ -224,6 +221,20 @@
 	  x = arg$[0], y = arg$[1];
 	  return [[x - 1, y - 1], [x - 1, y], [x - 1, y + 1], [x, y - 1], [x, y + 1], [x + 1, y - 1], [x + 1, y], [x + 1, y + 1]];
 	};
+	expandCoordinates = function(listOfCoordinates){
+	  return flip(fold)([], function(acc, x){
+	    if (coordinatesInList(acc, x)) {
+	      return acc;
+	    } else {
+	      return acc.concat([x]);
+	    }
+	  })(
+	  curry$(function(x$, y$){
+	    return x$.concat(y$);
+	  })(listOfCoordinates)(
+	  concatMap(neighbourCoordinates)(
+	  listOfCoordinates)));
+	};
 	countLivingNeighbours = function(livingCellsCoordinates, coordinates){
 	  return function(it){
 	    return it.length;
@@ -251,10 +262,8 @@
 	      numberOfNeighbours: countLivingNeighbours(livingCellsCoordinates, coords)
 	    });
 	  })(
-	  coordinatesBeetween(
-	  expandBoundaries(
-	  boundaries(
-	  livingCellsCoordinates))));
+	  expandCoordinates(
+	  livingCellsCoordinates));
 	};
 	module.exports = {
 	  read: read,
@@ -265,10 +274,24 @@
 	  coordinatesEquals: coordinatesEquals,
 	  coordinatesInList: coordinatesInList,
 	  neighbourCoordinates: neighbourCoordinates,
+	  expandCoordinates: expandCoordinates,
 	  countLivingNeighbours: countLivingNeighbours,
 	  willCellLive: willCellLive,
 	  tick: tick
 	};
+	function curry$(f, bound){
+	  var context,
+	  _curry = function(args) {
+	    return f.length > 1 ? function(){
+	      var params = args ? args.concat() : [];
+	      context = bound ? context || this : this;
+	      return params.push.apply(params, arguments) <
+	          f.length && arguments.length ?
+	        _curry.call(context, params) : f.apply(context, params);
+	    } : f;
+	  };
+	  return _curry();
+	}
 	//# sourceMappingURL=C:\Users\Florian\OneDrive\Dokumente\GitHub\conway-game-of-life\node_modules\livescript-loader\index.js!C:\Users\Florian\OneDrive\Dokumente\GitHub\conway-game-of-life\src\conway-logic.ls.map
 
 

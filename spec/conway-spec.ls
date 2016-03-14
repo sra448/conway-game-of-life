@@ -79,13 +79,6 @@ describe "conway-logic", ->
         .to-equal [[-1 -1], [2 2]]
 
 
-  describe "coordinates-beetween", ->
-
-    that-it "returns a list of all coordinates between two boundaries", ->
-      expect conway.coordinates-beetween [[0 0], [2 2]]
-        .to-equal [[0 0], [0 1], [0 2], [1 0], [1 1], [1 2], [2 0], [2 1], [2 2]]
-
-
   describe "coordinates-equals", ->
 
     that-it "returns true if the coordinates are equal", ->
@@ -108,11 +101,36 @@ describe "conway-logic", ->
         .to-equal false
 
 
+  describe "coordinates-beetween", ->
+
+    that-it "returns a list of all coordinates between two boundaries", ->
+      expect conway.coordinates-beetween [[0 0], [2 2]]
+        .to-equal [[0 0], [0 1], [0 2], [1 0], [1 1], [1 2], [2 0], [2 1], [2 2]]
+
+
   describe "neighbour-coordinates", ->
 
     that-it "returns a list of all the neighbouring coordinates given some coordinates", ->
       expect conway.neighbour-coordinates [1 1]
         .to-equal [[0 0], [0 1], [0 2], [1 0], [1 2], [2 0], [2 1], [2 2]]
+
+
+  describe "expand-coordinates", ->
+
+    # that-it "returns a list of all coordinates in the given array and all their neighbours", ->
+    #   expect conway.expand-coordinates [[1 1]]
+    #     .to-equal [[1 1],
+    #                [0 0], [0 1], [0 2], [1 0], [1 2], [2 0], [2 1], [2 2]]
+    #   expect conway.expand-coordinates [[1 1], [3 3]]
+    #     .to-equal [[1 1], [3 3],
+    #                [0 0], [0 1], [0 2], [1 0], [1 2], [2 0], [2 1], [2 2],
+    #                [2 2], [2 3], [2 4], [3 2], [3 4], [4 2], [4 3], [4 4]]
+
+    that-it "returned list only contains each coordinates once", ->
+      expect conway.expand-coordinates [[1 1], [2 2]]
+        .to-equal [[1 1], [2 2],
+                   [0 0], [0 1], [0 2], [1 0], [1 2], [2 0], [2 1],
+                   [1 3], [2 3], [3 1], [3 2], [3 3]]
 
 
   describe "count-living-neighbours", ->
