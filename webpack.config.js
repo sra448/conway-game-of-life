@@ -1,6 +1,6 @@
 module.exports = {
   entry: {
-    // "src/conway": "./src/srcipt.ls",
+    "src/conway": "./src/conway.ls",
     "spec/conway_spec": "./spec/conway-spec.ls"
   },
   output: {
