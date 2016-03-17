@@ -1,7 +1,8 @@
 module.exports = {
   entry: {
     "src/conway": "./src/conway.ls",
-    "spec/conway_spec": "./spec/conway-spec.ls"
+    "spec/conway-spec": "./spec/conway-spec.ls",
+    "spec/perf-spec": "./spec/perf-spec.ls"
   },
   output: {
     path: __dirname,

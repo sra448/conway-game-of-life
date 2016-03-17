@@ -11,11 +11,14 @@
     "lodash": "^4.6.1",
     "prelude-ls": "^1.1.2",
     "react": "^0.14.7",
+    "react-addons-css-transition-group": "^0.14.7",
+    "react-addons-transition-group": "^0.14.7",
     "react-dom": "^0.14.7",
     "rx": "^4.0.8"
   },
   "scripts": {
     "start": "webpack",
-    "test": "webpack && jasmine-node spec --verbose"
+    "test": "webpack && jasmine-node ./spec/conway-spec.js --verbose",
+    "perf": "webpack && jasmine-node ./spec/perf-spec.js --verbose"
   }
 }

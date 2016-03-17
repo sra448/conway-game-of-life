@@ -3,10 +3,10 @@ ReactDOM = require \react-dom
 {filter} = require \prelude-ls
 
 ui = require \./conway-ui.ls
-{tick, coordinates-in-list, coordinates-equals} = require \./conway-logic.ls
+{Coordinate, tick, coordinates-in-list, coordinates-equals} = require \./conway-logic.ls
 
 mouse-coords-to-tile-coords = (x, y) ->
-  [(Math.floor x / 20), (Math.floor y / 20)]
+  Coordinate (Math.floor x / 20), (Math.floor y / 20)
 
 # catch user interaction
 
@@ -40,7 +40,7 @@ pause = mouse-down
     pauser.onNext false
 
 timer = Rx.Observable
-  .interval 350
+  .interval 500
   .pausable pauser
   .map -> [\tick]
 
@@ -71,7 +71,7 @@ update-world = (state, [action, value]) ->
 
 # kickoff
 
-Rx.Observable.merge [timer, ticks, toggles, draws]
+Rx.Observable.merge [timer, ticks, draws]
   .start-with [\tick]
   .scan update-world, []
   .subscribe (living-cells) ->

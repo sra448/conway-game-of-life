@@ -1,10 +1,15 @@
 Immutable = require \immutable
-{at, concat-map, curry, sort-by, filter, flip, find, fold, map, split, zip, minimum, maximum, group-by, values, join} = require \prelude-ls
+{at, concat-map, curry, sort-by, filter, flip, find, fold, map, split, zip, minimum, maximum, group-by, values, join, Func} = require \prelude-ls
+{memoize} = Func
 
 # log logs a single value, just for debugging
 log = ->
   console.log it
   it
+
+# acts as a constructor for coordinate arrays, that can be compared by identity
+Coordinate = c = memoize (x, y) ->
+  [x, y]
 
 # turns string into list of living cells coordinates
 read = (str) ->
@@ -15,13 +20,14 @@ read = (str) ->
       zip [[x, y] for y to row.length], row
         |> filter ([coord, value]) ->
           value == \X
-        |> map ([coord]) -> coord
+        |> map ([[x, y]]) -> c x, y
 
 # turns coordinates into a 2d grid string representation
 print = (living-cells-coordinates) ->
   living-cells-coordinates
     |> boundaries
     |> coordinates-beetween
+    |> map ([x, y]) -> c x, y
     |> group-by (at 0)
     |> values
     |> sort-by ([[x]]) -> x
@@ -36,7 +42,7 @@ coordinates-equals = curry ([x1, y1], [x2, y2]) ->
 
 # check if coordinates are in list of coordinates
 coordinates-in-list = curry (list, coordinates) ->
-  !! find (coordinates-equals coordinates), list
+  !! find (== coordinates), list
 
 # gets top-left and bottom-right coordinates of a list of coordinates
 boundaries = (living-cells-coordinates) ->
@@ -54,7 +60,7 @@ coordinates-beetween = ([[x-min, y-min], [x-max,  y-max]]) ->
 
 # returns the neighbouring coordinates
 neighbour-coordinates = ([x, y]) ->
-  [[x-1, y-1] [x-1, y] [x-1, y+1] [x, y-1] [x, y+1] [x+1, y-1] [x+1, y] [x+1, y+1]]
+  [(c x-1, y-1), (c x-1, y), (c x-1, y+1), (c x, y-1), (c x, y+1), (c x+1, y-1), (c x+1, y), (c x+1, y+1)]
 
 # returns a list of all coordinates in the given array and all their neighbours
 expand-coordinates = (list-of-coordinates) ->
@@ -89,6 +95,7 @@ tick = (living-cells-coordinates) ->
 
 # our main function is tick, all the others are mainly exposed for testing
 module.exports = {
+  Coordinate
   read
   print
   boundaries

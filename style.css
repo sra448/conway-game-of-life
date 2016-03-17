@@ -39,3 +39,21 @@ h1 {
   -moz-transition: opacity .25s ease-in-out;
   -webkit-transition: opacity .25s ease-in-out;
 }
+
+.cell-enter {
+  opacity: 0.01;
+}
+
+.cell-enter.cell-enter-active {
+  opacity: 1;
+  transition: opacity 200ms ease-in;
+}
+
+.cell-leave {
+  opacity: 1;
+}
+
+.cell-leave.cell-leave-active {
+  opacity: 0.01;
+  transition: opacity 200ms ease-in;
+}

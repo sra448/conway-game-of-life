@@ -1,11 +1,25 @@
-conway = require "../src/conway-logic.ls"
+fold = require \prelude-ls
+
 that-it = it
+
+conway = require "../src/conway-logic.ls"
+c = conway.Coordinate
 
 describe "conway-logic", ->
 
   that-it "is defined", ->
     expect conway
       .to-be-defined!
+
+
+  describe "Coordinate", ->
+    that-it "acts as a constructor for coordinate arrays, that can be compared by identity", ->
+      expect conway.Coordinate 1, 2
+        .not.to-be [1, 2]
+      expect [1, 2]
+        .not.to-be [1, 2]
+      expect conway.Coordinate 1, 2
+        .to-be conway.Coordinate 1, 2
 
 
   describe "read", ->
@@ -40,22 +54,22 @@ describe "conway-logic", ->
   describe "print", ->
 
     that-it "turns a single cell (any coordinates) into an X", ->
-      [[0 0], [0 1], [1 0], [12 4], [4 12]].for-each (coords) ->
+      [(c 0, 0), (c 0, 1), (c 1, 0), (c 12, 4), (c 4, 12)].for-each (coords) ->
         expect conway.print [coords]
           .to-equal "X"
 
     that-it "turns a dead cells between living cells into a -", ->
-      [[[[0, 0] [0, 2]], "X-X"]].for-each ([coords, str]) ->
+      [[[(c 0, 0), (c 0, 2)], "X-X"]].for-each ([coords, str]) ->
         expect conway.print coords
           .to-equal str
 
     that-it "returns rows delimited by \\n", ->
-      [[[[-1, 1] [1, 1]], "X\n-\nX"]].for-each ([coords, str]) ->
+      [[[(c -1, 1), (c 1, 1)], "X\n-\nX"]].for-each ([coords, str]) ->
         expect conway.print coords
           .to-equal str
 
     that-it "returns a string that represents a grid that spans from top-left cell to bottom-right cell", ->
-      [[[[0, 0] [0, 2]], "X-X"], [[[0, 0] [1, 2]], "X--\n--X"]].for-each ([coords, str]) ->
+      [[[(c 0, 0), (c 0, 2)], "X-X"], [[(c 0, 0), (c 1, 2)], "X--\n--X"]].for-each ([coords, str]) ->
         expect conway.print coords
           .to-equal str
 
@@ -79,6 +93,7 @@ describe "conway-logic", ->
         .to-equal [[-1 -1], [2 2]]
 
 
+  # deprecated in favour of using === on Coordinate objects
   describe "coordinates-equals", ->
 
     that-it "returns true if the coordinates are equal", ->
@@ -93,11 +108,13 @@ describe "conway-logic", ->
   describe "coordinates-in-list", ->
 
     that-it "returns true if the coordinates are in a list of coordinates", ->
-      expect conway.coordinates-in-list [[0 0] [0 1] [0 2]], [0 0]
+      expect conway.coordinates-in-list [(c 0 0), (c 0 1), (c 0 2)], (c 0 0)
         .to-equal true
 
     that-it "returns false if the coordinates are not in a list of coordinates", ->
-      expect conway.coordinates-in-list [[1 0] [1 1] [1 2]], [0 0]
+      expect conway.coordinates-in-list [(c 1 0), (c 1 1), (c 1 2)], (c 0 0)
+        .to-equal false
+      expect conway.coordinates-in-list [(c 1 0), (c 1 1), (c 1 2)], [1 0]
         .to-equal false
 
 
@@ -117,26 +134,26 @@ describe "conway-logic", ->
 
   describe "expand-coordinates", ->
 
-    # that-it "returns a list of all coordinates in the given array and all their neighbours", ->
-    #   expect conway.expand-coordinates [[1 1]]
-    #     .to-equal [[1 1],
-    #                [0 0], [0 1], [0 2], [1 0], [1 2], [2 0], [2 1], [2 2]]
-    #   expect conway.expand-coordinates [[1 1], [3 3]]
-    #     .to-equal [[1 1], [3 3],
-    #                [0 0], [0 1], [0 2], [1 0], [1 2], [2 0], [2 1], [2 2],
-    #                [2 2], [2 3], [2 4], [3 2], [3 4], [4 2], [4 3], [4 4]]
+    that-it "returns a list of all coordinates in the given array and all their neighbours", ->
+      expect conway.expand-coordinates [(c 1 1)]
+        .to-equal [(c 1 1),
+                   (c 0 0), (c 0 1), (c 0 2), (c 1 0), (c 1 2), (c 2 0), (c 2 1), (c 2 2)]
+      expect conway.expand-coordinates [(c 1 1), (c 3 3)]
+        .to-equal [(c 1 1), (c 3 3),
+                   (c 0 0), (c 0 1), (c 0 2), (c 1 0), (c 1 2), (c 2 0), (c 2 1), (c 2 2),
+                   (c 2 3), (c 2 4), (c 3 2), (c 3 4), (c 4 2), (c 4 3), (c 4 4)]
 
     that-it "returned list only contains each coordinates once", ->
-      expect conway.expand-coordinates [[1 1], [2 2]]
-        .to-equal [[1 1], [2 2],
-                   [0 0], [0 1], [0 2], [1 0], [1 2], [2 0], [2 1],
-                   [1 3], [2 3], [3 1], [3 2], [3 3]]
+      expect conway.expand-coordinates [(c 1 1), (c 2 2)]
+        .to-equal [(c 1 1), (c 2 2),
+                   (c 0 0), (c 0 1), (c 0 2), (c 1 0), (c 1 2), (c 2 0), (c 2 1),
+                   (c 1 3), (c 2 3), (c 3 1), (c 3 2), (c 3 3)]
 
 
   describe "count-living-neighbours", ->
 
     that-it "returns the number of neighbours that are present in the list of living-cells passed in", ->
-      expect conway.count-living-neighbours [[0 0]], [1 1]
+      expect conway.count-living-neighbours [(c 0 0)], (c 1 1)
         .to-equal 1
 
 
