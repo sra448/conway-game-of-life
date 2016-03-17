@@ -1,5 +1,5 @@
 Immutable = require \immutable
-{at, concat-map, curry, sort-by, filter, flip, find, fold, map, split, zip, minimum, maximum, group-by, values, join, Func} = require \prelude-ls
+{at, apply, concat-map, curry, sort-by, filter, flip, find, fold, map, split, zip, minimum, maximum, group-by, values, join, Func} = require \prelude-ls
 {memoize} = Func
 
 # log logs a single value, just for debugging
@@ -59,13 +59,13 @@ coordinates-beetween = ([[x-min, y-min], [x-max,  y-max]]) ->
   [[x, y] for x in [x-min to x-max] for y in [y-min to y-max]]
 
 # returns the neighbouring coordinates
-neighbour-coordinates = ([x, y]) ->
+neighbour-coordinates = memoize (x, y) ->
   [(c x-1, y-1), (c x-1, y), (c x-1, y+1), (c x, y-1), (c x, y+1), (c x+1, y-1), (c x+1, y), (c x+1, y+1)]
 
 # returns a list of all coordinates in the given array and all their neighbours
 expand-coordinates = (list-of-coordinates) ->
   list-of-coordinates
-    |> concat-map neighbour-coordinates
+    |> concat-map apply neighbour-coordinates
     |> (++) list-of-coordinates
     |> (flip fold) [], (acc, x) ->
       if coordinates-in-list acc, x then acc else acc ++ [x]
@@ -73,7 +73,7 @@ expand-coordinates = (list-of-coordinates) ->
 # returns the number of living neighbours
 count-living-neighbours = (living-cells-coordinates, coordinates) ->
   coordinates
-    |> neighbour-coordinates
+    |> apply neighbour-coordinates
     |> filter coordinates-in-list living-cells-coordinates
     |> (.length)
 

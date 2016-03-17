@@ -128,7 +128,7 @@ describe "conway-logic", ->
   describe "neighbour-coordinates", ->
 
     that-it "returns a list of all the neighbouring coordinates given some coordinates", ->
-      expect conway.neighbour-coordinates [1 1]
+      expect conway.neighbour-coordinates 1, 1
         .to-equal [[0 0], [0 1], [0 2], [1 0], [1 2], [2 0], [2 1], [2 2]]
 
 
