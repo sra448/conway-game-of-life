@@ -24,7 +24,7 @@ describe "conway-logic", ->
 
   describe "read", ->
 
-    # turns a string representation of a 2d grid into an array of living cells' coordinates
+    # turns a string representation of a 2d grid into an array of living cells' positions
 
     that-it "living cells (X) end up in results array", ->
       expect (conway.read "X").length
@@ -45,7 +45,7 @@ describe "conway-logic", ->
         expect (conway.read str).length
           .to-equal count
 
-    that-it "living cells turn into coordinates with fix-point in the top-left corner", ->
+    that-it "living cells turn into positions with fix-point in the top-left corner", ->
       [["X" [0, 0]] ["-X" [0, 1]] ["--\nX-" [1, 0]] ["--\n-X" [1, 1]]].for-each ([str, coords]) ->
         expect conway.read str
           .to-equal [coords]
@@ -53,7 +53,7 @@ describe "conway-logic", ->
 
   describe "print", ->
 
-    that-it "turns a single cell (any coordinates) into an X", ->
+    that-it "turns a single cell (any positions) into an X", ->
       [(c 0, 0), (c 0, 1), (c 1, 0), (c 12, 4), (c 4, 12)].for-each (coords) ->
         expect conway.print [coords]
           .to-equal "X"
@@ -76,7 +76,7 @@ describe "conway-logic", ->
 
   describe "boundaries", ->
 
-    that-it "returns the top-left and bottom-right coordinates given an array of coordinates", ->
+    that-it "returns the top-left and bottom-right positions given an array of positions", ->
       expect conway.boundaries [[0 0] [3 3] [2 1]]
         .to-equal [[0 0], [3 3]]
 
@@ -86,65 +86,33 @@ describe "conway-logic", ->
           .to-equal [coords, coords]
 
 
-  describe "expand-boundaries", ->
+  describe "positions-between", ->
 
-    that-it "returns a pair of boundary coordinates that has been expanded by one", ->
-      expect conway.expand-boundaries [[0 0], [1 1]]
-        .to-equal [[-1 -1], [2 2]]
-
-
-  # deprecated in favour of using === on Coordinate objects
-  describe "coordinates-equals", ->
-
-    that-it "returns true if the coordinates are equal", ->
-      expect conway.coordinates-equals [0 0], [0 0]
-        .to-equal true
-
-    that-it "returns false if the coordinates are not equal", ->
-      expect conway.coordinates-equals [0 0], [1 0]
-        .to-equal false
-
-
-  describe "coordinates-in-list", ->
-
-    that-it "returns true if the coordinates are in a list of coordinates", ->
-      expect conway.coordinates-in-list [(c 0 0), (c 0 1), (c 0 2)], (c 0 0)
-        .to-equal true
-
-    that-it "returns false if the coordinates are not in a list of coordinates", ->
-      expect conway.coordinates-in-list [(c 1 0), (c 1 1), (c 1 2)], (c 0 0)
-        .to-equal false
-      expect conway.coordinates-in-list [(c 1 0), (c 1 1), (c 1 2)], [1 0]
-        .to-equal false
-
-
-  describe "coordinates-beetween", ->
-
-    that-it "returns a list of all coordinates between two boundaries", ->
-      expect conway.coordinates-beetween [[0 0], [2 2]]
+    that-it "returns a list of all positions between two boundaries", ->
+      expect conway.positions-between [[0 0], [2 2]]
         .to-equal [[0 0], [0 1], [0 2], [1 0], [1 1], [1 2], [2 0], [2 1], [2 2]]
 
 
-  describe "neighbour-coordinates", ->
+  describe "neighbour-positions", ->
 
-    that-it "returns a list of all the neighbouring coordinates given some coordinates", ->
-      expect conway.neighbour-coordinates 1, 1
+    that-it "returns a list of all the neighbouring positions given some positions", ->
+      expect conway.neighbour-positions 1, 1
         .to-equal [[0 0], [0 1], [0 2], [1 0], [1 2], [2 0], [2 1], [2 2]]
 
 
-  describe "expand-coordinates", ->
+  describe "expand-positions", ->
 
-    that-it "returns a list of all coordinates in the given array and all their neighbours", ->
-      expect conway.expand-coordinates [(c 1 1)]
+    that-it "returns a list of all positions in the given array and all their neighbours", ->
+      expect conway.expand-positions [(c 1 1)]
         .to-equal [(c 1 1),
                    (c 0 0), (c 0 1), (c 0 2), (c 1 0), (c 1 2), (c 2 0), (c 2 1), (c 2 2)]
-      expect conway.expand-coordinates [(c 1 1), (c 3 3)]
+      expect conway.expand-positions [(c 1 1), (c 3 3)]
         .to-equal [(c 1 1), (c 3 3),
                    (c 0 0), (c 0 1), (c 0 2), (c 1 0), (c 1 2), (c 2 0), (c 2 1), (c 2 2),
                    (c 2 3), (c 2 4), (c 3 2), (c 3 4), (c 4 2), (c 4 3), (c 4 4)]
 
-    that-it "returned list only contains each coordinates once", ->
-      expect conway.expand-coordinates [(c 1 1), (c 2 2)]
+    that-it "returned list only contains each positions once", ->
+      expect conway.expand-positions [(c 1 1), (c 2 2)]
         .to-equal [(c 1 1), (c 2 2),
                    (c 0 0), (c 0 1), (c 0 2), (c 1 0), (c 1 2), (c 2 0), (c 2 1),
                    (c 1 3), (c 2 3), (c 3 1), (c 3 2), (c 3 3)]
@@ -161,26 +129,26 @@ describe "conway-logic", ->
 
     that-it "makes any living cell with fewer than two live neighbours die, as if caused by under-population", ->
       [0, 1].for-each (count) ->
-        expect conway.will-cell-live { living:true, number-of-neighbours:count }
+        expect conway.will-cell-live true, count
           .to-be false
 
     that-it "makes any living cell with two or three live neighbours live on to the next generation", ->
       [2, 3].for-each (count) ->
-        expect conway.will-cell-live { living:true, number-of-neighbours:count }
+        expect conway.will-cell-live true, count
           .to-be true
 
     that-it "makes any living cell with more than three live neighbours die, as if by over-population", ->
       [4, 5, 6, 7, 8].for-each (count) ->
-        expect conway.will-cell-live { living:true, number-of-neighbours:count }
+        expect conway.will-cell-live true, count
           .to-be false
 
     that-it "makes any dead cell with exactly three live neighbours becomes alive cell, as if by reproduction", ->
-      expect conway.will-cell-live { living:false, number-of-neighbours:3 }
+      expect conway.will-cell-live false, 3
         .to-be true
 
     that-it "makes any other dead cell remain dead", ->
       [0, 1, 2, 4, 5, 6, 7, 8].for-each (count) ->
-        expect conway.will-cell-live { living:false, number-of-neighbours:count }
+        expect conway.will-cell-live false, count
           .to-be false
 
 

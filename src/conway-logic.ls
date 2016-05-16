@@ -1,97 +1,79 @@
-Immutable = require \immutable
-{at, apply, concat-map, curry, sort-by, filter, flip, find, fold, map, split, zip, minimum, maximum, group-by, values, join, Func} = require \prelude-ls
+{at, apply, concat-map, sort-by, filter, map, split, zip, minimum, maximum, group-by, values, join, unique, Func} = require \prelude-ls
 {memoize} = Func
 
-# log logs a single value, just for debugging
-log = ->
-  console.log it
-  it
+# acts as a factory for coordinate arrays, that can be compared by identity
+Coordinate = c = memoize Array
 
-# acts as a constructor for coordinate arrays, that can be compared by identity
-Coordinate = c = memoize (x, y) ->
-  [x, y]
-
-# turns string into list of living cells coordinates
+# turns string into list of living cells positions
 read = (str) ->
   str
     |> split "\n"
     |> zip [0 to it.length]
     |> concat-map ([x, row]) ->
       zip [[x, y] for y to row.length], row
-        |> filter ([coord, value]) ->
-          value == \X
-        |> map ([[x, y]]) -> c x, y
+    |> filter (at 1) >> (== \X)
+    |> map (at 0) >> apply Coordinate
 
-# turns coordinates into a 2d grid string representation
-print = (living-cells-coordinates) ->
-  living-cells-coordinates
-    |> boundaries
-    |> coordinates-beetween
-    |> map ([x, y]) -> c x, y
-    |> group-by (at 0)
-    |> values
-    |> sort-by ([[x]]) -> x
-    |> map map (coord) ->
-      if coordinates-in-list living-cells-coordinates, coord then \X else \-
-    |> map join ""
-    |> join "\n"
-
-# checks coordinate equality
-coordinates-equals = curry ([x1, y1], [x2, y2]) ->
-  x1 == x2 && y1 == y2
-
-# check if coordinates are in list of coordinates
-coordinates-in-list = curry (list, coordinates) ->
-  !! find (== coordinates), list
-
-# gets top-left and bottom-right coordinates of a list of coordinates
-boundaries = (living-cells-coordinates) ->
-  xses = map (at 0), living-cells-coordinates
-  yses = map (at 1), living-cells-coordinates
+# gets top-left and bottom-right positions of a list of positions
+boundaries = (living-cells) ->
+  xses = map (at 0), living-cells
+  yses = map (at 1), living-cells
   [[(minimum xses), (minimum yses)] [(maximum xses), (maximum yses)]]
 
-# expands any pair of boundary coordinates by one
-expand-boundaries = ([[x-min, y-min], [x-max,  y-max]]) ->
-  [[x-min - 1, y-min - 1], [x-max + 1,  y-max + 1]]
+# positions-between gets all positions between two boundaries
+positions-between = ([[x-min, y-min], [x-max,  y-max]]) ->
+  [c x, y for x in [x-min to x-max] for y in [y-min to y-max]]
 
-# coordinates-beetween gets all coordinates between two boundaries
-coordinates-beetween = ([[x-min, y-min], [x-max,  y-max]]) ->
-  [[x, y] for x in [x-min to x-max] for y in [y-min to y-max]]
+# turns positions into a 2d grid string representation
+area = do
+  boundaries
+  >> positions-between
+  >> (group-by at 0)
+  >> values
+  >> (sort-by (([[x]]) -> x))
 
-# returns the neighbouring coordinates
-neighbour-coordinates = memoize (x, y) ->
+print-cell = (living-cells, position) -->
+  if position in living-cells then \X else \-
+
+print = (living-cells) ->
+  living-cells
+    |> area
+    |> map (map print-cell living-cells) >> join ""
+    |> join "\n"
+
+# returns the neighbouring positions
+neighbour-positions = memoize (x, y) ->
   [(c x-1, y-1), (c x-1, y), (c x-1, y+1), (c x, y-1), (c x, y+1), (c x+1, y-1), (c x+1, y), (c x+1, y+1)]
 
-# returns a list of all coordinates in the given array and all their neighbours
-expand-coordinates = (list-of-coordinates) ->
-  list-of-coordinates
-    |> concat-map apply neighbour-coordinates
-    |> (++) list-of-coordinates
-    |> (flip fold) [], (acc, x) ->
-      if coordinates-in-list acc, x then acc else acc ++ [x]
+# returns a list of all positions in the given array and all their neighbours
+expand-positions = (positions) ->
+  positions
+    |> concat-map apply neighbour-positions
+    |> (++) positions
+    |> unique
+
+# evolves a cell based on the rules of the game of life
+will-cell-live = (is-alive, neighbours-count) ->
+  is-alive && 1 < neighbours-count < 4 || neighbours-count == 3
 
 # returns the number of living neighbours
-count-living-neighbours = (living-cells-coordinates, coordinates) ->
-  coordinates
-    |> apply neighbour-coordinates
-    |> filter coordinates-in-list living-cells-coordinates
+count-living-neighbours = (living-cells, position) ->
+  position
+    |> apply neighbour-positions
+    |> filter (in living-cells)
     |> (.length)
 
 # evolves a cell based on the rules of the game of life
-will-cell-live = ({living, number-of-neighbours}) ->
-  switch living
-    case true then number-of-neighbours in [2, 3]
-    case false then number-of-neighbours == 3
-    default living
+will-cell-live-fn = (living-cells, position) -->
+  will-cell-live do
+    position in living-cells
+    count-living-neighbours living-cells, position
 
-# evolves a grid (list of living cells' coordinates) into the next ticks' grid
-tick = (living-cells-coordinates) ->
-  living-cells-coordinates
-    |> expand-coordinates
-    |> filter (coords) ->
-      will-cell-live do
-        living: coordinates-in-list living-cells-coordinates, coords
-        number-of-neighbours: count-living-neighbours living-cells-coordinates, coords
+# evolves a grid (list of living cells' positions) into the next ticks' grid
+tick = (living-cells) ->
+  living-cells
+    |> expand-positions
+    |> filter will-cell-live-fn living-cells
 
 # our main function is tick, all the others are mainly exposed for testing
 module.exports = {
@@ -99,12 +81,9 @@ module.exports = {
   read
   print
   boundaries
-  expand-boundaries
-  coordinates-beetween
-  coordinates-equals
-  coordinates-in-list
-  neighbour-coordinates
-  expand-coordinates
+  positions-between
+  neighbour-positions
+  expand-positions
   count-living-neighbours
   will-cell-live
   tick

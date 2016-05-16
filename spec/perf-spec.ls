@@ -19,4 +19,4 @@ describe "conway performance", ->
       p = conway.tick p
 
     expect (new Date) - time-start
-      .to-be-less-than 20 * 1000
+      .to-be-less-than 15 * 1000
