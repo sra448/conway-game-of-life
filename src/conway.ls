@@ -3,7 +3,7 @@ ReactDOM = require \react-dom
 {filter} = require \prelude-ls
 
 ui = require \./conway-ui.ls
-{Coordinate, tick, coordinates-in-list, coordinates-equals} = require \./conway-logic.ls
+{Coordinate, tick, coordinates-equals} = require \./conway-logic.ls
 
 mouse-coords-to-tile-coords = (x, y) ->
   Coordinate (Math.floor x / 20), (Math.floor y / 20)
@@ -51,13 +51,13 @@ ticks = mouse-down
 # world manipulation
 
 activate-cell = (list, coord) ->
-  if coordinates-in-list list, coord
+  if coord in list
     list
   else
     list ++ [coord]
 
 toggle-cell = (list, coord) ->
-  if coordinates-in-list list, coord
+  if coord in list
     list |> filter -> !coordinates-equals coord, it
   else
     list ++ [coord]
