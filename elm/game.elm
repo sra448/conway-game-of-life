@@ -52,11 +52,6 @@ id : a -> a
 id x = x
 
 
---findNeighbours : Position -> Set Position -> Set Position
---findNeighbours cell cells =
--- List.filter (isNeighbour cell) cells
-
-
 neighbours : (PositionX, PositionY) -> Set (PositionX, PositionY)
 neighbours (x, y) =
   Set.fromList
@@ -115,7 +110,16 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-  div []
+  div
+    [ style
+      [ ("height", "100%")
+      , ("width", "100%")
+      , ("background-color", "white")
+      , ("background-image", " linear-gradient(rgba(27, 148, 81, 0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(27, 148, 81, 0.6) 1px, transparent 1px)")
+      , ("background-size", "16px 16px")
+      , ("background-position", "-1px -1px")
+      ]
+    ]
     [ a [ onClick Tick ] [ text "tick"]
     , Keyed.ul [] <|
         List.map viewKeyedCell (Set.toList model.cells)
