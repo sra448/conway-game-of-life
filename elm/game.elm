@@ -26,24 +26,16 @@ main =
 
 
 type alias Model =
-  { cells : Set (PositionX, PositionY)
+  { cells : Set Coord
   }
 
 
-type alias PositionX = Int
-type alias PositionY = Int
+type alias Coord = (Int, Int)
 
 
 model : Model
 model =
-  Model
-    (Set.fromList
-      [ (10, 10)
-      , (11, 11)
-      , (11, 12)
-      , (10, 12)
-      , (9, 12)
-      ])
+  Model Set.empty
 
 
 init : ( Model, Cmd Msg )
@@ -69,7 +61,7 @@ update msg model =
       ({ model | cells = toggleCell position model.cells }, Cmd.none)
 
 
-toggleCell : Position -> Set (PositionX, PositionY) -> Set (PositionX, PositionY)
+toggleCell : Position -> Set Coord -> Set Coord
 toggleCell position cells =
   let
     cell = ((position.x // 16), (position.y // 16))
@@ -93,7 +85,7 @@ id : a -> a
 id x = x
 
 
-neighbours : (PositionX, PositionY) -> Set (PositionX, PositionY)
+neighbours : Coord -> Set Coord
 neighbours (x, y) =
   Set.fromList
     [ ((dec x), (dec y))
@@ -107,12 +99,12 @@ neighbours (x, y) =
     ]
 
 
-countNeighbours : (PositionX, PositionY) -> Set (PositionX, PositionY) -> Int
+countNeighbours : Coord -> Set Coord -> Int
 countNeighbours cell cells =
   Set.size <| Set.intersect (neighbours cell) cells
 
 
-isCellLiving : Set (PositionX, PositionY) -> (PositionX, PositionY) -> Bool
+isCellLiving : Set Coord -> Coord -> Bool
 isCellLiving cells cell =
   let
     isAlive = Set.member cell cells
@@ -121,12 +113,12 @@ isCellLiving cells cell =
     isAlive && (1 < neighboursCount && neighboursCount < 4) || (neighboursCount == 3)
 
 
-expandPosition : (PositionX, PositionY) -> Set (PositionX, PositionY)
+expandPosition : Coord -> Set Coord
 expandPosition cell =
   Set.insert cell (neighbours cell)
 
 
-tick : Set (PositionX, PositionY) -> Set (PositionX, PositionY)
+tick : Set Coord -> Set Coord
 tick cells =
   cells
     |> Set.foldl (\ c acc -> Set.union acc (expandPosition c)) Set.empty
@@ -165,13 +157,13 @@ view model =
 
 
 
-viewKeyedCell : (PositionX, PositionY) -> (String, Html Msg)
+viewKeyedCell : Coord -> (String, Html Msg)
 viewKeyedCell cell =
   ((toString (fst cell)) ++ ":" ++ (toString (snd cell)), lazy viewCell cell )
 
 
 
-viewCell : (PositionX, PositionY) -> Html Msg
+viewCell : Coord -> Html Msg
 viewCell cell =
   div
     [ style
