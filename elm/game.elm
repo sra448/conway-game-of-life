@@ -6,11 +6,20 @@ import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy, lazy2)
 import Set exposing (..)
 import List exposing (..)
+import Mouse exposing (Position)
 
 
+-- MAIN
 
+
+main : Program Never
 main =
-  App.beginnerProgram { model = model, update = update, view = view }
+  App.program
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    }
 
 
 -- MODEL
@@ -37,7 +46,39 @@ model =
       ])
 
 
+init : ( Model, Cmd Msg )
+init =
+    ( model, Cmd.none )
+
+
 -- UPDATE
+
+
+type Msg
+  = Tick
+  | MouseMsg Position
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+  case msg of
+    Tick ->
+      ({ model | cells = tick model.cells }, Cmd.none)
+
+    MouseMsg position ->
+      ({ model | cells = toggleCell position model.cells }, Cmd.none)
+
+
+toggleCell : Position -> Set (PositionX, PositionY) -> Set (PositionX, PositionY)
+toggleCell position cells =
+  let
+    cell = ((position.x // 16), (position.y // 16))
+  in
+    if Set.member cell cells then
+      Set.remove cell cells
+    else
+      Set.insert cell cells
+
 
 
 inc : Int -> Int
@@ -92,17 +133,14 @@ tick cells =
     |> Set.filter (isCellLiving cells)
 
 
+-- SUBSCRIPTIONS
 
 
-type Msg
-  = Tick
-
-
-update : Msg -> Model -> Model
-update msg model =
-  case msg of
-    Tick ->
-      { model | cells = tick model.cells }
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Mouse.clicks MouseMsg
+        ]
 
 
 -- VIEW
